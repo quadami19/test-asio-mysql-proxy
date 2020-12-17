@@ -80,19 +80,27 @@ void connection::error(std::error_code _ec, bool _isClient)
 
 void connection::shutdown(bool _isClient)
 {
+	std::error_code ec;
 	//Due to the processing of two asynchronous transfers,
 	//sockets must be closed sequentially in two function calls.
 	if (_isClient)
 	{
-		m_clientSocket.shutdown(asio::ip::tcp::socket::shutdown_both);
-		m_clientSocket.close();
+		if (m_clientSocket.is_open())
+		{
+			m_clientSocket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+			m_clientSocket.close();
+		}
 	}
 	else
 	{
-		m_serverSocket.shutdown(asio::ip::tcp::socket::shutdown_both);
-		m_serverSocket.close();
+		if (m_serverSocket.is_open())
+		{
+			m_serverSocket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
+			m_serverSocket.close();
+		}
 	}
 
+	//Delete object
 	if (!m_serverSocket.is_open() && !m_clientSocket.is_open())
 		m_stopTransferFunc(shared_from_this());
 }
